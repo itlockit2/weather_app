@@ -15,14 +15,17 @@ export default class App extends React.Component {
   state = {
     isLoaded: false,
     fontLoaded: false,
-    error: null
+    temperature: null,
+    name: null,
+    error: null,
+    city: null
   };
 
   async componentDidMount() {
     this._loadAssetsAsync();
     navigator.geolocation.getCurrentPosition(
       position => {
-        this.setState({ isLoaded: true });
+        this._getWeather(position.coords.latitude, position.coords.longitude);
       },
       error => {
         this.setState({
@@ -47,10 +50,28 @@ export default class App extends React.Component {
     }
   }
 
+  _getWeather = (lat, lon) => {
+    fetch(
+      `http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&APPID=${API_KEY}`
+    )
+      .then(response => response.json())
+      .then(json => {
+        this.setState({
+          temperature: json.main.temp,
+          name: json.weather[0].main,
+          city: json.name,
+          isLoaded: true
+        });
+      });
+  };
+
   render() {
     const { isLoaded } = this.state;
     const { fontLoaded } = this.state;
     const { error } = this.state;
+    const { temperature } = this.state;
+    const { name } = this.state;
+    const { city } = this.state;
 
     if (fontLoaded) {
       if (error) {
@@ -70,7 +91,11 @@ export default class App extends React.Component {
         return (
           <View style={styles.container}>
             <StatusBar hidden={true} />
-            <Weather />
+            <Weather
+              weatherName={name}
+              city={city}
+              temp={Math.floor(temperature - 273.15)}
+            />
           </View>
         );
       } else {
